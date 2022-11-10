@@ -1,0 +1,16 @@
+---
+title: "Reduced-rank models in glmmTMB"
+output: html_document
+---
+### House work 
+
+First call libraries
+```{r message=FALSE, warning=FALSE}
+
+packages <- c("ggplot2", "dplyr", "tidyr", "glmmTMB", "ecostats", "DHARMa")
+install.packages(setdiff(packages, rownames(installed.packages()))) 
+invisible(lapply(packages, library, character.only = TRUE))
+
+source("functions.R")
+```
+
