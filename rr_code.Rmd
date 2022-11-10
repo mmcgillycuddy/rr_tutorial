@@ -57,14 +57,30 @@ wf_boxplot <- wf_data %>%
   theme_classic() +
   theme(legend.position="bottom"  ) +
   scale_fill_brewer(palette = "Set2")
+
+wf_boxplot
 ```
 
 ## Fitting mixed models in glmmTMB
 
 `glmmTMB` uses the same formula syntax as `lme4`.
+```{r, eval = F}
+?glmmTMB
+```
+
+For the wind farm example, we would like to fit this GLMM:
+
 ```{r}
 fit.us <- glmmTMB(Abundance ~ Year*Zone + diag(Year*Zone|Species) + 
                  (1 | Station) +
                  (Species + 0|ID),
                wf_data, family = poisson)
+```
+
+## reduced-rank models
+
+Let's try to fit a reduced-rank model
+
+```{r}
+
 ```
