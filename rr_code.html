@@ -366,23 +366,65 @@ pre code {
 </div>
 
 
-<div id="lecture-revision" class="section level2">
-<h2>Lecture revision</h2>
-<div id="main-points-to-remember-from-the-lecture" class="section level3">
-<h3>Main points to remember from the lecture</h3>
-<ul>
-<li><p>R is awesome.</p></li>
-<li><p>But only if you know how to load and manipulate data in R, write
-in scripts, and save your work.</p></li>
-<li><p>You can find out lots by using help functions (e.g. ?lm) or
-googling key topics (e.g. “linear models on R”)</p></li>
-</ul>
-</div>
-<div id="code-we-learned" class="section level3">
-<h3>Code we learned</h3>
+<div id="house-work" class="section level3">
+<h3>House work</h3>
 <p>First call libraries</p>
-<pre class="r"><code>library(tidyverse)</code></pre>
+<pre class="r"><code>packages &lt;- c(&quot;ggplot2&quot;, &quot;dplyr&quot;, &quot;tidyr&quot;, &quot;glmmTMB&quot;, &quot;ecostats&quot;, &quot;DHARMa&quot;)
+install.packages(setdiff(packages, rownames(installed.packages()))) 
+invisible(lapply(packages, library, character.only = TRUE))
+
+source(&quot;functions.R&quot;)</code></pre>
 </div>
+<div id="wind-farm-example" class="section level3">
+<h3>Wind farm example</h3>
+<p>The wind farm data set is part of the <code>ecostats</code> package.
+It is in wide format with Species along the columns. We need to
+transform the data to long format for <code>glmmTMB</code></p>
+<pre class="r"><code>wf &lt;- cbind(windFarms$abund, windFarms$X) %&gt;% 
+  mutate(ID = 1:nrow(.)) %&gt;% 
+  pivot_longer(cols = colnames(windFarms$abund), 
+               names_to = &quot;Species&quot;,
+               values_to = &quot;Abundance&quot;)</code></pre>
+<p>As always, we need to “clean” the data.</p>
+<pre class="r"><code>stat03 &lt;- unique(wf[wf$Year==&quot;2003&quot;,]$Station)
+stat10 &lt;- unique(wf[wf$Year==&quot;2010&quot;,]$Station)
+sum_abund &lt;- wf %&gt;%
+  filter(Station %in% stat03 ) %&gt;%
+  group_by(Species) %&gt;%
+  summarise(obs = sum(Abundance &gt; 0) ) %&gt;% 
+  ungroup() %&gt;% 
+  arrange(-obs) # order from most to least abundant
+
+spp_names &lt;- unique(sum_abund$Species[sum_abund$obs&gt;=5])
+wf_data &lt;- wf %&gt;% 
+  filter(Species %in% spp_names) %&gt;% 
+  mutate(Species = factor(Species, levels = spp_names))</code></pre>
+</div>
+<div id="plot-the-data" class="section level2">
+<h2>Plot the data</h2>
+<pre class="r"><code>labs=c(0,1,10,100)
+wf_boxplot &lt;- wf_data %&gt;% 
+  ggplot(aes(x = Year, y = log(Abundance + 1), fill = Zone)) +
+  geom_boxplot(outlier.shape = 21)+
+  facet_wrap(~ Species, ncol = 3, scales = &quot;free&quot;) +
+  labs(x = &quot;Year&quot;, color  = &quot;Zone&quot;, y = &quot;Abundance [log(y+1)-scale]&quot;) +
+  scale_y_continuous( breaks = log(labs + 1), labels = labs)+
+  theme_classic() +
+  theme(legend.position=&quot;bottom&quot;  ) +
+  scale_fill_brewer(palette = &quot;Set2&quot;)</code></pre>
+</div>
+<div id="fitting-mixed-models-in-glmmtmb" class="section level2">
+<h2>Fitting mixed models in glmmTMB</h2>
+<p><code>glmmTMB</code> uses the same formula syntax as
+<code>lme4</code>.</p>
+<pre class="r"><code>fit.us &lt;- glmmTMB(Abundance ~ Year*Zone + diag(Year*Zone|Species) + 
+                 (1 | Station) +
+                 (Species + 0|ID),
+               wf_data, family = poisson)</code></pre>
+<pre><code>## Warning in fitTMB(TMBStruc): Model convergence problem; non-positive-definite
+## Hessian matrix. See vignette(&#39;troubleshooting&#39;)</code></pre>
+<pre><code>## Warning in fitTMB(TMBStruc): Model convergence problem; false convergence (8).
+## See vignette(&#39;troubleshooting&#39;)</code></pre>
 </div>
 
 
