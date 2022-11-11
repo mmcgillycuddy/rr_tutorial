@@ -20,6 +20,9 @@ source("functions.R")
 The wind farm data set is part of the `ecostats` package. It is in wide format with Species along the columns. We need to transform the data to long format for `glmmTMB`
 
 ```{r}
+library(ecostats)
+?ecostats::windFarms
+
 wf <- cbind(windFarms$abund, windFarms$X) %>% 
   mutate(ID = 1:nrow(.)) %>% 
   pivot_longer(cols = colnames(windFarms$abund), 
